@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Analyzer</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --text-color: #1f2937;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --warning-bg: #fee2e2;
+            --warning-text: #991b1b;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --moderate-bg: #fef3c7;
+            --moderate-text: #92400e;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #818cf8;
+            --text-color: #f3f4f6;
+            --bg-color: #111827;
+            --card-bg: #1f2937;
+            --border-color: #374151;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --warning-bg: #7f1d1d;
+            --warning-text: #fecaca;
+            --success-bg: #064e3b;
+            --success-text: #dcfce7;
+            --moderate-bg: #78350f;
+            --moderate-text: #fef3c7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 0.5rem;
+            font-size: 1.2rem;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--shadow-color);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            border: 1px solid var(--border-color);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            min-width: 120px;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .password-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .info-item {
+            background-color: var(--bg-color);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-item i {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .crack-times {
+            margin-top: 1.5rem;
+        }
+
+        .device-time {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+        }
+
+        .device-time:hover {
+            background-color: var(--bg-color);
+        }
+
+        .strength-indicator {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .strength-weak {
+            background-color: var(--warning-bg);
+            color: var(--warning-text);
+        }
+
+        .strength-moderate {
+            background-color: var(--moderate-bg);
+            color: var(--moderate-text);
+        }
+
+        .strength-strong {
+            background-color: var(--success-bg);
+            color: var(--success-text);
+        }
+
+        .dictionary-warning {
+            background-color: var(--warning-bg);
+            color: var(--warning-text);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .dictionary-warning i {
+            margin-top: 0.2rem;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background-color: var(--border-color);
+            border-radius: 2px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0;
+            transition: width 0.3s ease-out;
+        }
+
+        .analyzing {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .analyzing::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            100% {
+                left: 100%;
+            }
+        }
+
+        .suggestions {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: var(--bg-color);
+            border-radius: 0.5rem;
+        }
+
+        .suggestions h4 {
+            margin-bottom: 0.5rem;
+        }
+
+        .suggestions ul {
+            list-style-type: none;
+            padding-left: 1.5rem;
+        }
+
+        .suggestions li {
+            margin: 0.5rem 0;
+            position: relative;
+        }
+
+        .suggestions li::before {
+            content: '→';
+            position: absolute;
+            left: -1.5rem;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>Password Analyzer</h1>
+            </div>
+            <button class="theme-toggle" aria-label="Toggle theme">
+                <i class="fas fa-moon"></i>
+            </button>
+        </header>
+
+        <div class="card">
+            <h2>Check the strength of your password</h2>
+            <p>Enter the password to analyze to evaluate the strength and identify potential vulnerabilities</p>
+            <div class="input-group">
+                <input type="password" id="passwordInput" placeholder="Inserisci la password...">
+                <button id="analyzeBtn">Analyze</button>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="card results" id="results">
+            <h3>Analysis results</h3>
+            <div class="password-info" id="passwordInfo"></div>
+            <div class="crack-times" id="crackTimes"></div>
+            <div id="strengthIndicator"></div>
+            <div id="dictionaryCheck"></div>
+            <div class="suggestions" id="suggestions"></div>
+        </div>
+    </div>
+
+    <script>
+        // Costanti e configurazione
+        const LOWERCASE = 'abcdefghijklmnopqrstuvwxyz';
+        const UPPERCASE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const DIGITS = '0123456789';
+        const SPECIAL = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+        const commonWords = {
+            english: [
+                'password', 'admin', 'user', 'login', 'welcome', 'secret', 'dragon',
+                'monkey', 'letmein', 'baseball', 'master', 'superman', 'batman',
+                'football', 'shadow', 'summer', 'winter', 'spring', 'autumn', 'qwerty',
+                'abc123', 'password123', 'admin123', 'test123', 'hello', 'adobe123',
+                'soccer', 'hockey', 'killer', 'george', 'asshole', 'computer', 'michelle',
+                'jessica', 'pepper', 'michael', 'charlie', 'freedom', 'whatever',
+                'jordan23', 'eagle', 'phoenix', 'master', 'jesus', 'love'
+            ],
+            italian: [
+                'password', 'amministratore', 'utente', 'accesso', 'benvenuto', 'segreto',
+                'calcio', 'estate', 'inverno', 'primavera', 'autunno', 'amore', 'sole',
+                'luna', 'stella', 'gatto', 'cane', 'casa', 'roma', 'milano', 'napoli',
+                'firenze', 'juventus', 'inter', 'milan', 'ferrari', 'italia', 'pizza',
+                'pasta', 'ciao', 'grazie', 'prego', 'admin', 'test', 'prova', 'amico',
+                'famiglia', 'bambino', 'lavoro', 'scuola', 'università', 'marco',
+                'giuseppe', 'maria', 'giovanni', 'mario', 'luigi', 'andrea'
+            ]
+        };
+
+        // Elementi DOM
+        const themeToggle = document.querySelector('.theme-toggle');
+        const passwordInput = document.getElementById('passwordInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const results = document.getElementById('results');
+        const passwordInfo = document.getElementById('passwordInfo');
+        const crackTimes = document.getElementById('crackTimes');
+        const strengthIndicator = document.getElementById('strengthIndicator');
+        const dictionaryCheck = document.getElementById('dictionaryCheck');
+        const suggestions = document.getElementById('suggestions');
+        const progressFill = document.querySelector('.progress-fill');
+
+        // Gestione tema
+        let isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        updateTheme();
+
+        themeToggle.addEventListener('click', () => {
+            isDark = !isDark;
+            updateTheme();
+        });
+
+        function updateTheme() {
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            themeToggle.querySelector('i').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        // Funzioni di utilità
+        function formatTime(seconds) {
+            if (seconds < 60) return `${seconds.toFixed(2)} secondi`;
+            if (seconds < 3600) return `${(seconds/60).toFixed(2)} minuti`;
+            if (seconds < 86400) return `${(seconds/3600).toFixed(2)} ore`;
+            if (seconds < 31536000) return `${(seconds/86400).toFixed(2)} giorni`;
+            if (seconds < 315360000) return `${(seconds/31536000).toFixed(2)} anni`;
+            return "più di 10 anni";
+        }
+
+        function findCommonWords(password) {
+            const foundWords = [];
+            const lowercasePassword = password.toLowerCase();
+
+            // Check English words
+            commonWords.english.forEach(word => {
+                if (lowercasePassword.includes(word.toLowerCase())) {
+                    foundWords.push({ word, language: 'inglese' });
+                }
+            });
+
+            // Check Italian words
+            commonWords.italian.forEach(word => {
+                if (lowercasePassword.includes(word.toLowerCase())) {
+                    foundWords.push({ word, language: 'italiana' });
+                }
+            });
+
+            return foundWords;
+        }
+
+        function generatePasswordSuggestions(analysis) {
+            const suggestions = [];
+
+            if (analysis.length < 12) {
+                suggestions.push('Aumenta la lunghezza della password ad almeno 12 caratteri');
+            }
+
+            if (!analysis.usedTypes.lowercase) {
+                suggestions.push('Aggiungi lettere minuscole');
+            }
+            if (!analysis.usedTypes.uppercase) {
+                suggestions.push('Aggiungi numeri alla password');
+            }
+            if (!analysis.usedTypes.special) {
+                suggestions.push('Aggiungi caratteri speciali (es. !@#$%^&*)');
+            }
+            if (analysis.commonWords.length > 0) {
+                suggestions.push('Evita l\'uso di parole comuni o facilmente indovinabili');
+            }
+            if (analysis.hasRepeatedChars) {
+                suggestions.push('Evita sequenze ripetute di caratteri');
+            }
+
+            return suggestions;
+        }
+
+        function analyzePassword(password) {
+            let charSetSize = 0;
+            const usedTypes = {
+                lowercase: password.match(/[a-z]/),
+                uppercase: password.match(/[A-Z]/),
+                digits: password.match(/[0-9]/),
+                special: password.match(/[^a-zA-Z0-9]/)
+            };
+
+            if (usedTypes.lowercase) charSetSize += LOWERCASE.length;
+            if (usedTypes.uppercase) charSetSize += UPPERCASE.length;
+            if (usedTypes.digits) charSetSize += DIGITS.length;
+            if (usedTypes.special) charSetSize += SPECIAL.length;
+
+            const combinations = Math.pow(charSetSize, password.length);
+
+            const speeds = {
+                "PC Desktop medio": 1000000,
+                "PC Gaming potente": 10000000,
+                "Cluster di GPU": 1000000000,
+                "Supercomputer": 1000000000000
+            };
+
+            let minSeconds = Infinity;
+            const crackTimes = {};
+
+            for (const [device, speed] of Object.entries(speeds)) {
+                const seconds = combinations / speed;
+                crackTimes[device] = formatTime(seconds);
+                if (seconds < minSeconds) minSeconds = seconds;
+            }
+
+            // Check for repeated characters
+            const hasRepeatedChars = /(.)\\1{2,}/.test(password);
+
+            // Find common words
+            const commonWords = findCommonWords(password);
+
+            // Determine password strength
+            let strength = 'strong';
+            if (minSeconds < 86400 || commonWords.length > 0) {
+                strength = 'weak';
+            } else if (minSeconds < 31536000) {
+                strength = 'moderate';
+            }
+
+            return {
+                length: password.length,
+                charSetSize,
+                combinations,
+                usedTypes,
+                crackTimes,
+                strength,
+                commonWords,
+                hasRepeatedChars,
+                entropy: Math.log2(combinations)
+            };
+        }
+
+        function updateUI(analysis) {
+            // Password info
+            passwordInfo.innerHTML = `
+                <div class="info-item">
+                    <i class="fas fa-text-width"></i>
+                    <div>
+                        <strong>Lunghezza:</strong><br>
+                        ${analysis.length} caratteri
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-calculator"></i>
+                    <div>
+                        <strong>Entropia:</strong><br>
+                        ${analysis.entropy.toFixed(2)} bit
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-key"></i>
+                    <div>
+                        <strong>Caratteri possibili:</strong><br>
+                        ${analysis.charSetSize}
+                    </div>
+                </div>
+            `;
+
+            // Character types
+            const typesList = document.createElement('div');
+            typesList.className = 'info-item';
+            typesList.innerHTML = `
+                <i class="fas fa-font"></i>
+                <div>
+                    <strong>Tipi di caratteri:</strong><br>
+                    ${analysis.usedTypes.lowercase ? '✓' : '✗'} Minuscole<br>
+                    ${analysis.usedTypes.uppercase ? '✓' : '✗'} Maiuscole<br>
+                    ${analysis.usedTypes.digits ? '✓' : '✗'} Numeri<br>
+                    ${analysis.usedTypes.special ? '✓' : '✗'} Speciali
+                </div>
+            `;
+            passwordInfo.appendChild(typesList);
+
+            // Crack times
+            crackTimes.innerHTML = '<h4>Tempo stimato per il brute force:</h4>';
+            Object.entries(analysis.crackTimes).forEach(([device, time]) => {
+                crackTimes.innerHTML += `
+                    <div class="device-time">
+                        <span>${device}</span>
+                        <span>${time}</span>
+                    </div>
+                `;
+            });
+
+            // Strength indicator
+            const strengthText = {
+                weak: '⚠️ Password debole! Si consiglia di utilizzare una password più complessa.',
+                moderate: '⚠️ Password moderatamente sicura. Potrebbe essere migliorata.',
+                strong: '✅ Password considerata forte contro attacchi brute force.'
+            };
+
+            strengthIndicator.className = `strength-indicator strength-${analysis.strength}`;
+            strengthIndicator.innerHTML = `
+                <i class="fas fa-${analysis.strength === 'strong' ? 'shield-alt' : 'exclamation-triangle'}"></i>
+                ${strengthText[analysis.strength]}
+            `;
+
+            // Dictionary check
+            dictionaryCheck.innerHTML = '';
+            if (analysis.commonWords.length > 0) {
+                const wordsFound = analysis.commonWords.map(w => 
+                    `"${w.word}" (${w.language})`
+                ).join(', ');
+                
+                dictionaryCheck.innerHTML = `
+                    <div class="dictionary-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <strong>Attenzione!</strong> La password contiene parole comuni: ${wordsFound}.<br>
+                            Questo rende la password più vulnerabile agli attacchi di tipo "dictionary".
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Suggestions
+            const passwordSuggestions = generatePasswordSuggestions(analysis);
+            if (passwordSuggestions.length > 0) {
+                suggestions.innerHTML = `
+                    <h4>Suggerimenti per migliorare la password:</h4>
+                    <ul>
+                        ${passwordSuggestions.map(s => `<li>${s}</li>`).join('')}
+                    </ul>
+                `;
+            } else {
+                suggestions.innerHTML = `
+                    <h4>Ottimo lavoro!</h4>
+                    <p>La tua password soddisfa tutti i criteri di sicurezza consigliati.</p>
+                `;
+            }
+
+            results.style.display = 'block';
+        }
+
+        function simulateProgress(duration, callback) {
+            const startTime = Date.now();
+            
+            function update() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                progressFill.style.width = `${progress * 100}%`;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    progressFill.style.width = '0';
+                    callback();
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+
+        // Event listeners
+        analyzeBtn.addEventListener('click', () => {
+            const password = passwordInput.value;
+            if (!password) return;
+
+            analyzeBtn.disabled = true;
+            analyzeBtn.classList.add('analyzing');
+            analyzeBtn.textContent = 'Analisi...';
+            results.style.display = 'none';
+
+            simulateProgress(800, () => {
+                const analysis = analyzePassword(password);
+                updateUI(analysis);
+                
+                analyzeBtn.disabled = false;
+                analyzeBtn.classList.remove('analyzing');
+                analyzeBtn.textContent = 'Analizza';
+            });
+        });
+
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !analyzeBtn.disabled) {
+                analyzeBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>
