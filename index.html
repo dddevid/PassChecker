@@ -419,18 +419,31 @@
 
         // Nuova funzione per controllare i leak
         async function checkPasswordLeak(password) {
-            try {
-                const response = await fetch(`https://leakcheck.net/api/public?key=public&check=${password}`);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                const data = await response.json();
-                return data;
-            } catch (error) {
-                console.error('Error checking password leak:', error);
-                return { success: false, error: 'Failed to check password leaks' };
+        try {
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(`https://leakcheck.net/api/public?key=public&check=${password}`);
+        
+        const response = await fetch(proxyUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
             }
+        });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
         }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error checking password leak:', error);
+        return { 
+            success: false, 
+            error: 'Failed to check password leaks',
+            details: error.message 
+        };
+    }
+}
 
         // Funzioni di utilità esistenti
         function formatTime(seconds) {
